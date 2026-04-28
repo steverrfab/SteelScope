@@ -5,18 +5,21 @@ const prisma = new PrismaClient();
 
 const organizationId = process.env.DEV_ORGANIZATION_ID ?? "00000000-0000-0000-0000-000000000001";
 const userId = process.env.DEV_USER_ID ?? "00000000-0000-0000-0000-000000000001";
+const organizationName = process.env.ORGANIZATION_NAME ?? "R&R Fabrication";
+const userEmail = process.env.DEV_USER_EMAIL ?? "estimator@rrfabrication.local";
+const userName = process.env.DEV_USER_NAME ?? "R&R Estimator";
 
 async function main() {
   await prisma.organization.upsert({
     where: { id: organizationId },
-    update: { name: "Demo Steel Fabricator" },
-    create: { id: organizationId, name: "Demo Steel Fabricator" }
+    update: { name: organizationName },
+    create: { id: organizationId, name: organizationName }
   });
 
   await prisma.user.upsert({
     where: { id: userId },
-    update: { email: "estimator@steelscope.local", name: "Dev Estimator" },
-    create: { id: userId, email: "estimator@steelscope.local", name: "Dev Estimator" }
+    update: { email: userEmail, name: userName },
+    create: { id: userId, email: userEmail, name: userName }
   });
 
   await prisma.organizationMembership.upsert({

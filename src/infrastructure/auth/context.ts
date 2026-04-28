@@ -32,29 +32,31 @@ export async function getAuthContext(): Promise<AuthContext> {
   const organizationId = h.get("x-organization-id");
   const role = (h.get("x-organization-role") ?? "viewer") as AuthContext["role"];
 
-  if (!userId || !organizationId) {
-    if (process.env.NODE_ENV !== "production") {
-      const devRole = (process.env.DEV_ORGANIZATION_ROLE ?? "owner") as AuthContext["role"];
-      return {
-        userId: process.env.DEV_USER_ID ?? "00000000-0000-0000-0000-000000000001",
-        organizationId: process.env.DEV_ORGANIZATION_ID ?? "00000000-0000-0000-0000-000000000001",
-        role: devRole,
-        permissions: new Set(rolePermissions[devRole] ?? rolePermissions.owner)
-      };
-    }
-    throw new Response("Authentication required", { status: 401 });
+  if (userId && organizationId) {
+    return {
+      userId,
+      organizationId,
+      role,
+      permissions: new Set(rolePermissions[role] ?? rolePermissions.viewer)
+    };
   }
 
-  return {
-    userId,
-    organizationId,
-    role,
-    permissions: new Set(rolePermissions[role] ?? rolePermissions.viewer)
-  };
+  if (process.env.AUTH_BYPASS_ENABLED === "true") {
+    const bypassRole = (process.env.DEV_ORGANIZATION_ROLE ?? "owner") as AuthContext["role"];
+
+    return {
+      userId: process.env.DEV_USER_ID ?? "00000000-0000-0000-0000-000000000001",
+      organizationId: process.env.DEV_ORGANIZATION_ID ?? "00000000-0000-0000-0000-000000000001",
+      role: bypassRole,
+      permissions: new Set(rolePermissions[bypassRole] ?? rolePermissions.owner)
+    };
+  }
+
+  throw Response.json({ error: "Authentication required" }, { status: 401 });
 }
 
 export function requirePermission(ctx: AuthContext, permission: Permission): void {
   if (!ctx.permissions.has(permission)) {
-    throw new Response("Forbidden", { status: 403 });
+    throw Response.json({ error: "Forbidden" }, { status: 403 });
   }
 }

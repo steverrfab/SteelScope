@@ -1,0 +1,45 @@
+{
+  "name": "steelscope",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Production-grade steel takeoff and estimating web app for structural steel and miscellaneous metals.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "node .next/standalone/server.js",
+    "start:next": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "worker": "tsx src/workers/index.ts",
+    "railway:build": "prisma generate && next build",
+    "railway:predeploy": "prisma migrate deploy",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "seed:steel": "tsx prisma/seed-steel-shapes.ts",
+    "seed:dev": "tsx prisma/seed-dev.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.758.0",
+    "@aws-sdk/s3-request-presigner": "^3.758.0",
+    "@prisma/client": "^6.4.1",
+    "bullmq": "^5.41.7",
+    "clsx": "^2.1.1",
+    "next": "^15.2.1",
+    "pdfjs-dist": "^4.10.38",
+    "pg": "^8.13.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "eslint": "^9.22.0",
+    "eslint-config-next": "^15.2.1",
+    "prisma": "^6.4.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}

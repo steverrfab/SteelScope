@@ -6,7 +6,7 @@
   },
   "deploy": {
     "startCommand": "npm run start",
-    "preDeployCommand": "npm run railway:predeploy",
+    "preDeployCommand": "npx prisma db push",
     "healthcheckPath": "/",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",

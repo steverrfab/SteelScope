@@ -1,5 +1,13 @@
 import type { Metadata } from "next";
-import { ClerkProvider, OrganizationSwitcher, UserButton } from "@clerk/nextjs";
+import {
+  ClerkProvider,
+  OrganizationSwitcher,
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton
+} from "@clerk/nextjs";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,9 +21,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <html lang="en">
         <body>
           <div className="auth-bar">
-            <OrganizationSwitcher hidePersonal />
-            <UserButton />
+            <SignedOut>
+              <SignInButton />
+              <SignUpButton />
+            </SignedOut>
+
+            <SignedIn>
+              <OrganizationSwitcher hidePersonal />
+              <UserButton />
+            </SignedIn>
           </div>
+
           {children}
         </body>
       </html>

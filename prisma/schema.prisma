@@ -1,0 +1,456 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrganizationRole {
+  owner
+  admin
+  chief_estimator
+  estimator
+  reviewer
+  viewer
+}
+
+enum ProcessingStatus {
+  queued
+  running
+  succeeded
+  failed
+  needs_review
+  skipped
+}
+
+enum ReviewStatus {
+  not_reviewed
+  needs_review
+  approved
+  rejected
+  edited
+  excluded
+  clarification_needed
+}
+
+enum Discipline {
+  structural
+  architectural
+  civil
+  mep
+  specifications
+  bid
+  addenda
+  unknown
+}
+
+enum PageType {
+  structural_drawing
+  architectural_drawing
+  civil_drawing
+  mep_drawing
+  specification
+  addendum
+  bid_instruction
+  scope_note
+  alternate
+  schedule
+  general_note
+  steel_note
+  connection_note
+  misc_metals_drawing
+  stair_drawing
+  rail_drawing
+  detail
+  section
+  elevation
+  unknown
+}
+
+model Organization {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  memberships OrganizationMembership[]
+  projects    Project[]
+  auditLogs   AuditLog[]
+}
+
+model User {
+  id          String   @id @default(uuid()) @db.Uuid
+  email       String   @unique
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  memberships OrganizationMembership[]
+  auditLogs   AuditLog[]
+}
+
+model OrganizationMembership {
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @db.Uuid
+  userId         String           @db.Uuid
+  role           OrganizationRole
+  createdAt      DateTime         @default(now())
+  organization   Organization     @relation(fields: [organizationId], references: [id])
+  user           User             @relation(fields: [userId], references: [id])
+
+  @@unique([organizationId, userId])
+}
+
+model Project {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  name           String
+  bidDate        DateTime?
+  clientName     String?
+  generalContractor String?
+  status         String   @default("bidding")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  files          File[]
+  documents      Document[]
+  pages          Page[]
+  drawingSheets  DrawingSheet[]
+  specSections   SpecSection[]
+  addenda        Addendum[]
+  revisions      Revision[]
+  extractedEntities ExtractedEntity[]
+  takeoffItems   TakeoffItem[]
+  estimateItems  EstimateItem[]
+  markups        Markup[]
+  measurements   Measurement[]
+  riskFlags      RiskFlag[]
+  rfis           Rfi[]
+  clarifications Clarification[]
+  reports        Report[]
+
+  @@index([organizationId])
+}
+
+model File {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  projectId      String   @db.Uuid
+  displayName    String
+  objectKey      String?
+  contentType    String
+  sizeBytes      BigInt
+  checksum       String?
+  version        Int      @default(1)
+  uploadId       String?
+  status         ProcessingStatus @default(queued)
+  lastError      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  project        Project  @relation(fields: [projectId], references: [id])
+  documents      Document[]
+  pages          Page[]
+
+  @@index([organizationId, projectId])
+}
+
+model Document {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @db.Uuid
+  fileId    String   @db.Uuid
+  title     String?
+  kind      String
+  pageCount Int      @default(0)
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id])
+  file      File     @relation(fields: [fileId], references: [id])
+  pages     Page[]
+}
+
+model Page {
+  id          String   @id @default(uuid()) @db.Uuid
+  projectId   String   @db.Uuid
+  fileId      String   @db.Uuid
+  documentId  String?  @db.Uuid
+  pageNumber  Int
+  width       Float?
+  height      Float?
+  thumbnailObjectKey String?
+  rasterObjectKey    String?
+  vectorTextConfidence Float?
+  ocrConfidence Float?
+  processingStatus ProcessingStatus @default(queued)
+  pageType    PageType @default(unknown)
+  discipline  Discipline @default(unknown)
+  searchText  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project @relation(fields: [projectId], references: [id])
+  file        File    @relation(fields: [fileId], references: [id])
+  document    Document? @relation(fields: [documentId], references: [id])
+  sheet       DrawingSheet?
+  ocrText     OcrText[]
+  entities    ExtractedEntity[]
+  riskFlags   RiskFlag[]
+
+  @@unique([fileId, pageNumber])
+  @@index([projectId, discipline, pageType])
+}
+
+model DrawingSheet {
+  id          String   @id @default(uuid()) @db.Uuid
+  projectId   String   @db.Uuid
+  pageId      String   @unique @db.Uuid
+  sheetNumber String?
+  sheetTitle  String?
+  discipline  Discipline @default(unknown)
+  scale       String?
+  revisionDate DateTime?
+  projectName String?
+  confidence  Float @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project @relation(fields: [projectId], references: [id])
+  page        Page    @relation(fields: [pageId], references: [id])
+  takeoffItems TakeoffItem[]
+
+  @@index([projectId, sheetNumber])
+}
+
+model SpecSection {
+  id          String @id @default(uuid()) @db.Uuid
+  projectId   String @db.Uuid
+  sectionNumber String?
+  title       String
+  summary     String?
+  sourcePageId String? @db.Uuid
+  createdAt   DateTime @default(now())
+  project     Project @relation(fields: [projectId], references: [id])
+}
+
+model Addendum {
+  id        String @id @default(uuid()) @db.Uuid
+  projectId String @db.Uuid
+  number    String
+  title     String?
+  issuedAt  DateTime?
+  summary   String?
+  createdAt DateTime @default(now())
+  project   Project @relation(fields: [projectId], references: [id])
+  revisions Revision[]
+}
+
+model Revision {
+  id          String @id @default(uuid()) @db.Uuid
+  projectId   String @db.Uuid
+  addendumId  String? @db.Uuid
+  priorFileId String? @db.Uuid
+  newFileId   String? @db.Uuid
+  changedAreas Json?
+  deltaSummary Json?
+  approvalStatus ReviewStatus @default(needs_review)
+  createdAt DateTime @default(now())
+  project   Project @relation(fields: [projectId], references: [id])
+  addendum  Addendum? @relation(fields: [addendumId], references: [id])
+}
+
+model OcrText {
+  id        String @id @default(uuid()) @db.Uuid
+  pageId    String @db.Uuid
+  source    String
+  text      String
+  confidence Float
+  blocks    Json?
+  tables    Json?
+  createdAt DateTime @default(now())
+  page      Page @relation(fields: [pageId], references: [id])
+}
+
+model ExtractedEntity {
+  id          String @id @default(uuid()) @db.Uuid
+  projectId   String @db.Uuid
+  pageId      String? @db.Uuid
+  family      String
+  label       String
+  value       String?
+  confidence  Float
+  reason      String
+  evidence    Json
+  reviewStatus ReviewStatus @default(not_reviewed)
+  createdAt   DateTime @default(now())
+  project     Project @relation(fields: [projectId], references: [id])
+  page        Page? @relation(fields: [pageId], references: [id])
+
+  @@index([projectId, family])
+}
+
+model TakeoffItem {
+  id          String @id @default(uuid()) @db.Uuid
+  projectId   String @db.Uuid
+  sheetId     String? @db.Uuid
+  category    String
+  memberType  String
+  shape       String?
+  size        String?
+  lengthFeet  Float?
+  quantity    Int
+  weightPerFoot Float?
+  totalWeightPounds Float?
+  materialGrade String?
+  finish      String?
+  location    String?
+  gridlineLocation String?
+  detailReference String?
+  specReference String?
+  notes       String?
+  confidenceScore Float @default(0)
+  manualReviewFlag Boolean @default(true)
+  sourceCitation Json
+  estimatorApprovalStatus ReviewStatus @default(not_reviewed)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project @relation(fields: [projectId], references: [id])
+  sheet       DrawingSheet? @relation(fields: [sheetId], references: [id])
+  estimateItems EstimateItem[]
+}
+
+model EstimateItem {
+  id          String @id @default(uuid()) @db.Uuid
+  projectId   String @db.Uuid
+  takeoffItemId String? @db.Uuid
+  description String
+  category    String
+  quantity    Float
+  unit        String
+  unitCost    Float
+  totalCost   Float
+  pricingBreakdown Json?
+  reviewStatus ReviewStatus @default(not_reviewed)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project @relation(fields: [projectId], references: [id])
+  takeoffItem TakeoffItem? @relation(fields: [takeoffItemId], references: [id])
+}
+
+model PricingTemplate {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  name           String
+  mode           String
+  inputs         Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model SteelShape {
+  id          String @id
+  family      String
+  size        String
+  weightPerFoot Float
+  depthInches Float?
+  widthInches Float?
+  thicknessInches Float?
+  areaSquareInches Float?
+  source      String
+  updatedAt   DateTime @updatedAt
+
+  @@index([family, size])
+}
+
+model Assembly {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  name           String
+  category       String
+  template       Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Markup {
+  id        String @id @default(uuid()) @db.Uuid
+  projectId String @db.Uuid
+  sheetId   String? @db.Uuid
+  kind      String
+  geometry  Json
+  text      String?
+  createdByUserId String? @db.Uuid
+  createdAt DateTime @default(now())
+  project   Project @relation(fields: [projectId], references: [id])
+}
+
+model Measurement {
+  id        String @id @default(uuid()) @db.Uuid
+  projectId String @db.Uuid
+  sheetId   String? @db.Uuid
+  kind      String
+  scale     String?
+  value     Float
+  unit      String
+  geometry  Json
+  createdAt DateTime @default(now())
+  project   Project @relation(fields: [projectId], references: [id])
+}
+
+model RiskFlag {
+  id        String @id @default(uuid()) @db.Uuid
+  projectId String @db.Uuid
+  pageId    String? @db.Uuid
+  severity  String
+  category  String
+  title     String
+  detail    String
+  evidence  Json
+  reviewStatus ReviewStatus @default(needs_review)
+  createdAt DateTime @default(now())
+  project   Project @relation(fields: [projectId], references: [id])
+  page      Page? @relation(fields: [pageId], references: [id])
+}
+
+model Rfi {
+  id        String @id @default(uuid()) @db.Uuid
+  projectId String @db.Uuid
+  question  String
+  reason    String
+  evidence  Json?
+  status    String @default("draft")
+  createdAt DateTime @default(now())
+  project   Project @relation(fields: [projectId], references: [id])
+}
+
+model Clarification {
+  id        String @id @default(uuid()) @db.Uuid
+  projectId String @db.Uuid
+  kind      String
+  text      String
+  evidence  Json?
+  status    String @default("draft")
+  createdAt DateTime @default(now())
+  project   Project @relation(fields: [projectId], references: [id])
+}
+
+model Report {
+  id        String @id @default(uuid()) @db.Uuid
+  projectId String @db.Uuid
+  kind      String
+  status    ProcessingStatus @default(queued)
+  objectKey String?
+  contentType String?
+  createdAt DateTime @default(now())
+  project   Project @relation(fields: [projectId], references: [id])
+}
+
+model AuditLog {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  userId         String? @db.Uuid
+  action         String
+  entityType     String
+  entityId       String?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  user           User? @relation(fields: [userId], references: [id])
+
+  @@index([organizationId, entityType, entityId])
+}

@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "worker": "tsx src/workers/index.ts",
-    "railway:build": "prisma generate && next build",
+"railway:build": "prisma generate && next build --debug",
     "railway:predeploy": "prisma db push",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",

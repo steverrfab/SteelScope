@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+import { auth, currentUser } from "@clerk/nextjs/server";
 
 export type Permission =
   | "project:read"
@@ -27,32 +27,29 @@ const rolePermissions: Record<AuthContext["role"], Permission[]> = {
 };
 
 export async function getAuthContext(): Promise<AuthContext> {
-  const h = await headers();
-  const userId = h.get("x-user-id");
-  const organizationId = h.get("x-organization-id");
-  const role = (h.get("x-organization-role") ?? "viewer") as AuthContext["role"];
+  const session = await auth();
 
-  if (userId && organizationId) {
-    return {
-      userId,
-      organizationId,
-      role,
-      permissions: new Set(rolePermissions[role] ?? rolePermissions.viewer)
-    };
+  if (!session.userId) {
+    throw Response.json({ error: "Authentication required" }, { status: 401 });
   }
 
-  if (process.env.AUTH_BYPASS_ENABLED === "true") {
-    const bypassRole = (process.env.DEV_ORGANIZATION_ROLE ?? "owner") as AuthContext["role"];
+  const user = await currentUser();
+  const organizationId =
+    session.orgId ??
+    user?.publicMetadata?.organizationId?.toString() ??
+    session.userId;
 
-    return {
-      userId: process.env.DEV_USER_ID ?? "00000000-0000-0000-0000-000000000001",
-      organizationId: process.env.DEV_ORGANIZATION_ID ?? "00000000-0000-0000-0000-000000000001",
-      role: bypassRole,
-      permissions: new Set(rolePermissions[bypassRole] ?? rolePermissions.owner)
-    };
-  }
+  const role =
+    (session.orgRole?.replace("org:", "") as AuthContext["role"] | undefined) ??
+    (user?.publicMetadata?.role as AuthContext["role"] | undefined) ??
+    "owner";
 
-  throw Response.json({ error: "Authentication required" }, { status: 401 });
+  return {
+    userId: session.userId,
+    organizationId,
+    role,
+    permissions: new Set(rolePermissions[role] ?? rolePermissions.owner)
+  };
 }
 
 export function requirePermission(ctx: AuthContext, permission: Permission): void {

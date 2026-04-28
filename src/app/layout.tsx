@@ -1,4 +1,12 @@
 import type { Metadata } from "next";
+import {
+  ClerkProvider,
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton
+} from "@clerk/nextjs";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -8,8 +16,21 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body>
+          <div className="auth-bar">
+            <SignedOut>
+              <SignInButton />
+              <SignUpButton />
+            </SignedOut>
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
+          </div>
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

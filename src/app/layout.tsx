@@ -4,10 +4,9 @@ import {
   OrganizationSwitcher,
   SignedIn,
   SignedOut,
-  SignInButton,
-  SignUpButton,
   UserButton
 } from "@clerk/nextjs";
+import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,8 +21,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <body>
           <div className="auth-bar">
             <SignedOut>
-              <SignInButton mode="modal" />
-              <SignUpButton mode="modal" />
+              <Link href="/sign-in">Sign in</Link>
+              <Link href="/sign-up">Sign up</Link>
             </SignedOut>
 
             <SignedIn>

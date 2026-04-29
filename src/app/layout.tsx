@@ -21,8 +21,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <body>
           <div className="auth-bar">
             <SignedOut>
-              <Link href="/sign-in">Sign in</Link>
-              <Link href="/sign-up">Sign up</Link>
+              <Link href="/login">Sign in</Link>
+<Link href="/register">Sign up</Link>
+
             </SignedOut>
 
             <SignedIn>

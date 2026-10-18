@@ -63,7 +63,7 @@ export const bcInviteOneScope: EmailInput = {
 export const bcUpdate: EmailInput = {
   fromAddress: "team@buildingconnected.com",
   subject: "Bid Due Date Extended to 10/20 - County Fire Station #9",
-  receivedAt: "2026-09-30T21:51:22Z",
+  receivedAt: "2026-10-15T21:51:22Z",
   html: `<p>Pat Lee of Sample Contracting, Inc sent your company a message about</p>
 <p>County Fire Station #9: Structural Steel</p><p>Bid Due Date Extended to 10/20</p>`,
 };

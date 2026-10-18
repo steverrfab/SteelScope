@@ -32,4 +32,5 @@ See [docs/railway-deployment.md](docs/railway-deployment.md) for GitHub-to-Railw
 This repo is being built into the R&R Fabrication takeoff pipeline. The plan is in [ARCHITECTURE.md](ARCHITECTURE.md), working rules in [CLAUDE.md](CLAUDE.md), and progress in [CHANGELOG.md](CHANGELOG.md).
 
 - `src/inbox/`: reads one estimating@ email and sorts it (new invite, update, digest, spam filter digest, other), then pulls invite fields. No mailbox connection yet.
-- Run the tests: `npm test`
+- `src/inbox/scan.ts`: stores a batch of emails in the pipeline's own tables and links updates to their invites.
+- Run the tests: `npm test` (add `TEST_DATABASE_URL` for a throwaway Postgres to include database tests)

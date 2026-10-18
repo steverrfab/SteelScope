@@ -454,3 +454,83 @@ model AuditLog {
 
   @@index([organizationId, entityType, entityId])
 }
+
+// ---------------------------------------------------------------------------
+// R&R takeoff pipeline: inbox reading and Invite Review (Phase 2).
+// New tables only. Column names are mapped to snake_case so the pipeline's
+// plain-SQL code (src/inbox/store.ts) and Prisma agree on every name.
+// IDs and timestamps are set by that code, not by database defaults.
+// ---------------------------------------------------------------------------
+
+/// One row per estimating@ email the pipeline has read.
+model InboxMessage {
+  id                String    @id @db.Uuid
+  graphMessageId    String    @unique @map("graph_message_id")
+  internetMessageId String?   @map("internet_message_id")
+  receivedAt        DateTime  @map("received_at")
+  fromAddress       String    @map("from_address")
+  fromName          String?   @map("from_name")
+  subject           String
+  kind              String
+  source            String
+  reason            String
+  /// Body text with access codes hidden.
+  safeText          String    @map("safe_text")
+  inviteId          String?   @map("invite_id") @db.Uuid
+  /// For updates: matched, unmatched, or ambiguous.
+  matchStatus       String?   @map("match_status")
+  matchNote         String?   @map("match_note")
+  createdAt         DateTime  @map("created_at")
+  invite            BidInvite? @relation(fields: [inviteId], references: [id])
+
+  @@index([kind, receivedAt])
+  @@index([inviteId])
+  @@map("inbox_messages")
+}
+
+/// One row per GC invitation. Nothing here reaches the bid tool until a
+/// person clicks Bid.
+model BidInvite {
+  id              String    @id @db.Uuid
+  source          String
+  projectName     String?   @map("project_name")
+  /// Lowercased, punctuation-free project name used for matching.
+  projectKey      String?   @map("project_key")
+  gc              String?
+  contact         String?
+  location        String?
+  scopes          String[]
+  dueDate         DateTime? @map("due_date") @db.Date
+  dueTime         String?   @map("due_time")
+  dueTimeZone     String?   @map("due_time_zone")
+  walkthrough     String?
+  rfiDeadline     String?   @map("rfi_deadline")
+  planLinks       Json      @map("plan_links")
+  flags           String[]
+  /// new, bid, or passed.
+  status          String
+  decisionBy      String?   @map("decision_by")
+  decisionAt      DateTime? @map("decision_at")
+  decisionReason  String?   @map("decision_reason")
+  calendarEntryId Int?      @map("calendar_entry_id")
+  createdAt       DateTime  @map("created_at")
+  updatedAt       DateTime  @map("updated_at")
+  messages        InboxMessage[]
+
+  @@index([status, dueDate])
+  @@index([projectKey])
+  @@map("bid_invites")
+}
+
+/// Bid invites the spam filter held back, read from its daily digest.
+model QuarantinedInvite {
+  id              String   @id @db.Uuid
+  sender          String
+  subject         String
+  heldOn          String   @map("held_on")
+  firstSeenAt     DateTime @map("first_seen_at")
+  digestMessageId String   @map("digest_message_id") @db.Uuid
+
+  @@unique([sender, subject, heldOn])
+  @@map("quarantined_invites")
+}

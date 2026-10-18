@@ -21,5 +21,20 @@ Plain-language record of changes to the R&R takeoff pipeline.
   formats. No database, nothing sent anywhere.
 - Bid tool: not touched.
 
+### Inbox storage and matching (Phase 2, part 2)
+- Three new pipeline tables: inbox_messages, bid_invites, quarantined_invites.
+  New tables only. Nothing existing changes.
+- Scanning a batch of emails stores each one once. Running it again on the
+  same emails changes nothing.
+- Updates (addenda, extensions, site visits) are linked to their invite only
+  when exactly one invite fits. If the same project is out with several GCs
+  and the email does not say which, it is held for a person.
+- The same invite received twice (for example from two platforms) is linked,
+  not added twice.
+- An update stating a different due date flags the invite for a person. The
+  due date on file is never changed automatically.
+- Quarantined invites from the spam filter digest are stored once each.
+- Still not connected to the mailbox. Bid tool: not touched.
+
 ### Docs
 - ARCHITECTURE.md: plan approved October 18, 2026; inbox sample findings added.

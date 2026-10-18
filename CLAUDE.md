@@ -34,7 +34,12 @@ Its rules are in rrfab-bid's BUSINESS_RULES.md and both repos' CLAUDE.md.
 
 ## Checks before any commit
 
-- `npm test` (inbox reader tests)
+- `npm test` (inbox reader tests). Set `TEST_DATABASE_URL` to a throwaway
+  Postgres to also run the database tests; they drop and recreate the
+  pipeline tables there. Never point it at a real database.
+- Pipeline tables live in `prisma/schema.prisma`. Code reaches them with plain
+  SQL (`src/inbox/scan.ts`). `src/inbox/test-schema.sql` must stay in step
+  with the schema.
 - `npx eslint <changed files>`
 - `npx tsc --noEmit` (9 errors exist today in older `src/infrastructure`
   files; new code must add none)

@@ -173,8 +173,9 @@ Steve decides otherwise, those invites save as "Other."
 
 | Table | Holds |
 |---|---|
-| inbox_messages | Every email seen and how it was sorted |
-| bid_invites | Parsed invite fields, platform, Bid/Pass decision, Calendar entry link |
+| inbox_messages | Every email seen, how it was sorted, and which invite it belongs to |
+| bid_invites | Parsed invite fields, platform, flags, Bid/Pass decision, Calendar entry link |
+| quarantined_invites | Bid invites the spam filter held back, from its daily digest |
 | documents | Each file, fingerprint, download status, manual flag |
 | pages | One row per page, sheet number, screened and read status |
 | spec_sections | Each spec section and whether it was read |

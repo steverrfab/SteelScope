@@ -26,3 +26,11 @@ By default the app can use local object storage and an in-memory queue for devel
 ## Railway
 
 See [docs/railway-deployment.md](docs/railway-deployment.md) for GitHub-to-Railway deployment with Postgres, Redis, a worker service, and S3-compatible storage buckets.
+
+## R&R Takeoff Pipeline
+
+This repo is being built into the R&R Fabrication takeoff pipeline. The plan is in [ARCHITECTURE.md](ARCHITECTURE.md), working rules in [CLAUDE.md](CLAUDE.md), and progress in [CHANGELOG.md](CHANGELOG.md).
+
+- `src/inbox/`: reads one estimating@ email and sorts it (new invite, update, digest, spam filter digest, other), then pulls invite fields. No mailbox connection yet.
+- `src/inbox/scan.ts`: stores a batch of emails in the pipeline's own tables and links updates to their invites.
+- Run the tests: `npm test` (add `TEST_DATABASE_URL` for a throwaway Postgres to include database tests)

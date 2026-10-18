@@ -1,6 +1,7 @@
 # R&R Takeoff Pipeline: Architecture
 
-Status: approved plan, no code yet. Last updated October 18, 2026.
+Status: approved plan, no code yet. Last updated October 18, 2026
+(inbox sample findings added).
 
 ## What it does
 
@@ -36,12 +37,29 @@ Nothing is ever sent or submitted to a GC automatically.
 ### 1. Inbox reading
 - Read-only access to estimating@ through Microsoft Graph, limited to that one
   mailbox.
-- Every email is logged and sorted: bid invite, addendum, or not relevant.
+- Every email is logged and sorted into one of four types:
+  - **New invite:** Blue Book, BuildingConnected, PlanHub, or a GC directly.
+  - **Update to a known invite:** addenda, RFI responses, due date extensions,
+    site visits, scope of work posted, reminders. Attached to the matching
+    invite. A due date change is flagged for a person to confirm on the
+    Calendar. Nothing in the bid tool changes on its own.
+  - **Digest or marketing:** daily summaries, "projects near you," vendor
+    sales emails. Logged and ignored.
+  - **Spam filter digest:** any bid invite the filter quarantined is shown on
+    the Invite Review list so it is not missed.
 - From invites it pulls: project name, GC, bid due date, walkthrough date, RFI
   deadline, plans link, platform.
 - A field it cannot find is left blank and flagged. Never guessed.
+  BuildingConnected invite emails never include the due date, so those always
+  arrive with the date blank for a person to fill.
+- Links wrapped by the spam filter are unwrapped to the real address.
+- Portal access codes that appear in email text are masked in logs and screens.
 - The same project from two platforms is matched, not entered twice. Each GC
   stays a separate invite, matching the bid tool's one-estimate-per-GC rule.
+  One invite can cover more than one scope (for example Structural Steel and
+  Misc Metals).
+- Dodge invites arrive through The Blue Book, which Dodge owns. No separate
+  Dodge source is needed.
 
 ### 2. Invite Review (person decides)
 - Each invite appears on the Invite Review list inside the pipeline.
@@ -176,6 +194,9 @@ Steve decides otherwise, those invites save as "Other."
 - **Portals.** Many bid platforms prohibit automated logins, use two-factor
   codes, or change their pages. Automated logins will break. Direct links and
   manual upload come first.
+- **Spam filter.** In the sample month, the spam filter quarantined 6 real
+  PlanHub invites. Until PlanHub is allow-listed, those never reach the inbox
+  and the pipeline only sees them in the quarantine digest.
 - **Cost.** Reading a large set at high resolution costs money per job. Measured
   in phase 6. The Bid/Pass gate keeps cost off jobs R&R will not bid.
 
